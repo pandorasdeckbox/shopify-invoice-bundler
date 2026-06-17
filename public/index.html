@@ -18,6 +18,8 @@
       --accent-soft: #ead7c5;
       --success: #246b45;
       --danger: #8f2d20;
+      --warning: #8c5b14;
+      --warning-soft: #f1dfbd;
       --shadow: 0 22px 50px rgba(72, 49, 24, 0.14);
       --radius-lg: 28px;
       --radius-md: 18px;
@@ -40,20 +42,30 @@
     }
 
     .shell {
-      max-width: 1320px;
+      max-width: 1380px;
       margin: 0 auto;
       padding: 24px;
     }
 
-    .masthead {
-      background: linear-gradient(145deg, rgba(255,255,255,0.72), rgba(255,255,255,0.44));
-      border: 1px solid rgba(112, 82, 50, 0.16);
-      border-radius: var(--radius-lg);
+    .masthead,
+    .panel,
+    .bundle-card,
+    .history-card,
+    .summary-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
       box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .masthead {
       padding: 28px;
+      border-radius: var(--radius-lg);
       display: grid;
       gap: 24px;
       margin-bottom: 24px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.72), rgba(255,255,255,0.44));
     }
 
     .masthead-top {
@@ -71,7 +83,8 @@
       margin-bottom: 10px;
     }
 
-    h1, h2, h3, p { margin: 0; }
+    h1, h2, h3, h4, p { margin: 0; }
+
     h1 {
       font-family: var(--font-display);
       font-size: clamp(2.8rem, 6vw, 4.8rem);
@@ -81,7 +94,7 @@
 
     .subtitle {
       margin-top: 12px;
-      max-width: 52ch;
+      max-width: 58ch;
       color: var(--muted);
       font-size: 1.05rem;
       line-height: 1.55;
@@ -103,18 +116,6 @@
       gap: 14px;
     }
 
-    .summary-card,
-    .panel,
-    .customer-card,
-    .order-card,
-    .history-card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-    }
-
     .summary-card {
       padding: 18px;
     }
@@ -133,47 +134,95 @@
 
     .workspace {
       display: grid;
-      grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr) 320px;
       gap: 24px;
       align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 16px;
     }
 
     .panel {
       padding: 22px;
     }
 
-    .panel h2 {
+    .panel h2,
+    .panel h3 {
       font-family: var(--font-display);
-      font-size: 1.8rem;
+    }
+
+    .panel h2 {
+      font-size: 1.9rem;
       margin-bottom: 8px;
     }
 
     .panel-copy {
       color: var(--muted);
-      margin-bottom: 18px;
       line-height: 1.5;
     }
 
-    .search-row {
+    .control-row {
       display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 18px;
     }
 
-    input[type="text"] {
-      width: 100%;
-      border: 1px solid rgba(112, 82, 50, 0.24);
-      background: var(--panel-strong);
-      color: var(--ink);
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
       border-radius: 999px;
-      padding: 14px 18px;
-      font: inherit;
+      background: rgba(255,255,255,0.68);
+      border: 1px solid var(--line);
     }
 
-    input[type="text"]:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 4px rgba(162, 79, 45, 0.12);
+    .switch {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+      background: rgba(112, 82, 50, 0.24);
+      border-radius: 999px;
+      transition: 0.2s ease;
+    }
+
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s ease;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+    }
+
+    .switch input:checked + .slider {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+    }
+
+    .switch input:checked + .slider::before {
+      transform: translateX(20px);
     }
 
     button {
@@ -201,32 +250,28 @@
       color: var(--ink);
     }
 
-    .stack {
+    .bundle-list {
       display: grid;
-      gap: 14px;
+      gap: 16px;
+      margin-top: 20px;
     }
 
-    .customer-card,
-    .order-card,
-    .history-card {
-      padding: 16px;
+    .bundle-card {
+      padding: 18px;
+      display: grid;
+      gap: 16px;
     }
 
-    .customer-card {
-      cursor: pointer;
-      transition: transform 120ms ease, border-color 120ms ease;
+    .bundle-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
     }
 
-    .customer-card:hover,
-    .customer-card.selected {
-      transform: translateY(-2px);
-      border-color: rgba(162, 79, 45, 0.45);
-    }
-
-    .customer-name,
-    .order-name {
+    .bundle-name {
+      font-size: 1.2rem;
       font-weight: 800;
-      font-size: 1.05rem;
       margin-bottom: 6px;
     }
 
@@ -236,40 +281,13 @@
       font-size: 0.94rem;
     }
 
-    .order-grid {
-      display: grid;
-      gap: 14px;
-    }
-
-    .order-card {
-      display: grid;
-      gap: 12px;
-    }
-
-    .order-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-    }
-
-    .order-check {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-    }
-
-    .order-check input {
-      margin-top: 5px;
-      width: 18px;
-      height: 18px;
-      accent-color: var(--accent);
-    }
-
-    .chips {
+    .chip-row,
+    .metric-row,
+    .action-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
+      align-items: center;
     }
 
     .chip {
@@ -280,65 +298,62 @@
       font-size: 0.82rem;
     }
 
-    .line-preview {
-      border-top: 1px dashed rgba(112, 82, 50, 0.2);
-      padding-top: 10px;
-      display: grid;
-      gap: 6px;
-      font-size: 0.93rem;
+    .chip-warning {
+      background: var(--warning-soft);
+      border-color: rgba(140, 91, 20, 0.22);
+      color: var(--warning);
     }
 
-    .line-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
+    .metric {
+      min-width: 118px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.62);
+      border: 1px solid var(--line);
     }
 
-    .summary-panel {
-      position: sticky;
-      top: 24px;
+    .metric-label {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 6px;
     }
 
-    .summary-panel h3,
-    .history-panel h3 {
+    .metric-value {
       font-family: var(--font-display);
-      font-size: 1.35rem;
-      margin-bottom: 8px;
+      font-size: 1.4rem;
     }
 
-    .selection-stats {
+    .order-stack {
       display: grid;
       gap: 10px;
-      margin: 18px 0;
+      border-top: 1px dashed rgba(112, 82, 50, 0.22);
+      padding-top: 12px;
     }
 
-    .selection-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 0.98rem;
-    }
-
-    .selection-row strong {
-      font-family: var(--font-display);
-      font-size: 1.2rem;
-    }
-
-    .history-list {
+    .order-row {
       display: grid;
-      gap: 12px;
-      margin-top: 18px;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.44);
+      border: 1px solid rgba(112, 82, 50, 0.12);
     }
 
-    .history-card {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
+    .order-row-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .order-row-right {
+      text-align: right;
+      white-space: nowrap;
     }
 
     .status {
-      margin-top: 14px;
+      margin-top: 16px;
       padding: 12px 14px;
       border-radius: var(--radius-sm);
       background: rgba(255,255,255,0.65);
@@ -362,22 +377,40 @@
     }
 
     .empty {
-      padding: 20px;
+      padding: 22px;
       border: 1px dashed rgba(112, 82, 50, 0.24);
       border-radius: var(--radius-md);
       color: var(--muted);
       text-align: center;
       background: rgba(255,255,255,0.36);
+      margin-top: 20px;
     }
 
-    .hidden { display: none; }
+    .history-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
 
-    @media (max-width: 1024px) {
+    .history-card {
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .sticky {
+      position: sticky;
+      top: 24px;
+    }
+
+    @media (max-width: 1080px) {
       .workspace {
         grid-template-columns: 1fr;
       }
 
-      .summary-panel {
+      .sticky {
         position: static;
       }
     }
@@ -388,22 +421,32 @@
       }
 
       .masthead,
-      .panel {
+      .panel,
+      .bundle-card {
         padding: 18px;
       }
 
       .masthead-top,
-      .order-top,
-      .history-card {
+      .bundle-top,
+      .history-card,
+      .control-row {
         flex-direction: column;
         align-items: flex-start;
       }
 
-      .search-row {
-        flex-direction: column;
+      .order-row {
+        grid-template-columns: 1fr;
+      }
+
+      .order-row-right {
+        text-align: left;
       }
 
       button {
+        width: 100%;
+      }
+
+      .action-row {
         width: 100%;
       }
     }
@@ -416,71 +459,90 @@
         <div>
           <div class="eyebrow">Pandora's Deck Box Internal Tool</div>
           <h1>Invoice<br>Bundler</h1>
-          <p class="subtitle">Find one customer, select their orders, and print a single combined invoice packet instead of juggling separate sheets.</p>
+          <p class="subtitle">Load every open order that is ready for attention, condense them by customer automatically, and keep the only real action focused on printing packets.</p>
         </div>
         <div class="shop-pill" id="shop-pill">Loading shop…</div>
       </div>
 
       <div class="summary-row">
         <div class="summary-card">
-          <div class="eyebrow">Workflow</div>
-          <div class="summary-value">1 → 1</div>
-          <div class="summary-note">Many orders in, one printable document out.</div>
+          <div class="eyebrow">Open Orders</div>
+          <div class="summary-value" id="summary-orders">0</div>
+          <div class="summary-note">Unfulfilled orders currently loaded into the queue.</div>
         </div>
         <div class="summary-card">
-          <div class="eyebrow">Search</div>
-          <div class="summary-value">Customers</div>
-          <div class="summary-note">Name, email, or phone search across Shopify customers.</div>
+          <div class="eyebrow">Bundled People</div>
+          <div class="summary-value" id="summary-bundles">0</div>
+          <div class="summary-note">Grouped packets ready to print.</div>
         </div>
         <div class="summary-card">
-          <div class="eyebrow">Output</div>
-          <div class="summary-value">History</div>
-          <div class="summary-note">Reopen old bundled packets without rebuilding them.</div>
+          <div class="eyebrow">On Hold</div>
+          <div class="summary-value" id="summary-hold">Included</div>
+          <div class="summary-note">Toggle whether on-hold orders stay in the print queue.</div>
         </div>
       </div>
     </header>
 
     <div class="workspace">
-      <aside class="stack">
+      <main class="stack">
         <section class="panel">
-          <h2>Find Customer</h2>
-          <p class="panel-copy">Search by email when possible for the cleanest match. Name and phone searches work too.</p>
-          <div class="search-row">
-            <input id="customer-query" type="text" placeholder="Search by email, name, or phone">
-            <button id="search-btn" class="btn-primary">Search</button>
+          <h2>Ready To Print</h2>
+          <p class="panel-copy">Each card below is one customer packet built from all of their currently open orders. Print one packet at a time or print every visible packet in one pass.</p>
+
+          <div class="control-row">
+            <div class="toggle-wrap">
+              <label class="switch" aria-label="Include on-hold orders">
+                <input id="include-on-hold" type="checkbox" checked>
+                <span class="slider"></span>
+              </label>
+              <div>
+                <div><strong>Include On Hold Orders</strong></div>
+                <div class="small">Enabled by default so the queue matches the shop's full open workload.</div>
+              </div>
+            </div>
+
+            <div class="action-row">
+              <button id="refresh-btn" class="btn-secondary" type="button">Refresh Queue</button>
+              <button id="print-all-btn" class="btn-primary" type="button" disabled>Print All Packets</button>
+            </div>
           </div>
-          <div id="search-status" class="status">Enter at least 2 characters to start.</div>
-          <div id="customer-results" class="stack" style="margin-top:16px;"></div>
+
+          <div id="queue-status" class="status">Loading open orders…</div>
+          <div id="bundle-list" class="bundle-list"></div>
+          <div id="empty-state" class="empty" hidden>No bundled packets matched the current filters.</div>
+        </section>
+      </main>
+
+      <aside class="stack sticky">
+        <section class="panel">
+          <h3>Print Queue</h3>
+          <p class="panel-copy">A quick snapshot of what will print with the current toggle state.</p>
+          <div class="metric-row" style="margin-top:18px; display:grid; grid-template-columns:1fr 1fr;">
+            <div class="metric">
+              <div class="metric-label">Packets</div>
+              <div class="metric-value" id="queue-bundles">0</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Orders</div>
+              <div class="metric-value" id="queue-orders">0</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Items</div>
+              <div class="metric-value" id="queue-items">0</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Total</div>
+              <div class="metric-value" id="queue-total">$0.00</div>
+            </div>
+          </div>
         </section>
 
-        <section class="panel history-panel">
-          <h3>Recent Bundles</h3>
-          <p class="panel-copy">The last 25 generated packets for this store.</p>
+        <section class="panel">
+          <h3>Recent Prints</h3>
+          <p class="panel-copy">Reopen recently generated packets if you need to print them again.</p>
           <div id="history-list" class="history-list"></div>
         </section>
       </aside>
-
-      <main class="stack">
-        <section class="panel">
-          <h2 id="orders-title">Orders</h2>
-          <p id="orders-copy" class="panel-copy">Choose a customer on the left to load their recent orders.</p>
-          <div id="orders-empty" class="empty">No customer selected yet.</div>
-          <div id="orders-list" class="order-grid hidden"></div>
-        </section>
-
-        <section class="panel summary-panel">
-          <h3>Selected Bundle</h3>
-          <p class="panel-copy">Only orders from one customer can be bundled into the same print packet.</p>
-          <div class="selection-stats">
-            <div class="selection-row"><span>Customer</span><strong id="selected-customer">None</strong></div>
-            <div class="selection-row"><span>Orders</span><strong id="selected-orders">0</strong></div>
-            <div class="selection-row"><span>Items</span><strong id="selected-items">0</strong></div>
-            <div class="selection-row"><span>Total</span><strong id="selected-total">$0.00</strong></div>
-          </div>
-          <button id="generate-btn" class="btn-primary" disabled>Generate Combined Packet</button>
-          <div id="bundle-status" class="status">Select at least one order to enable generation.</div>
-        </section>
-      </main>
     </div>
   </div>
 
@@ -488,29 +550,26 @@
     const state = {
       shop: new URLSearchParams(window.location.search).get('shop') || '',
       shopName: '',
-      customers: [],
-      selectedCustomer: null,
-      orders: [],
-      selectedOrderIds: new Set(),
+      includeOnHold: true,
+      bundles: [],
       history: [],
     };
 
-    const customerQueryInput = document.getElementById('customer-query');
-    const customerResults = document.getElementById('customer-results');
-    const searchStatus = document.getElementById('search-status');
-    const searchButton = document.getElementById('search-btn');
     const shopPill = document.getElementById('shop-pill');
-    const ordersTitle = document.getElementById('orders-title');
-    const ordersCopy = document.getElementById('orders-copy');
-    const ordersEmpty = document.getElementById('orders-empty');
-    const ordersList = document.getElementById('orders-list');
-    const selectedCustomerEl = document.getElementById('selected-customer');
-    const selectedOrdersEl = document.getElementById('selected-orders');
-    const selectedItemsEl = document.getElementById('selected-items');
-    const selectedTotalEl = document.getElementById('selected-total');
-    const generateButton = document.getElementById('generate-btn');
-    const bundleStatus = document.getElementById('bundle-status');
+    const includeOnHoldInput = document.getElementById('include-on-hold');
+    const refreshButton = document.getElementById('refresh-btn');
+    const printAllButton = document.getElementById('print-all-btn');
+    const queueStatus = document.getElementById('queue-status');
+    const bundleList = document.getElementById('bundle-list');
+    const emptyState = document.getElementById('empty-state');
     const historyList = document.getElementById('history-list');
+    const summaryOrders = document.getElementById('summary-orders');
+    const summaryBundles = document.getElementById('summary-bundles');
+    const summaryHold = document.getElementById('summary-hold');
+    const queueBundles = document.getElementById('queue-bundles');
+    const queueOrders = document.getElementById('queue-orders');
+    const queueItems = document.getElementById('queue-items');
+    const queueTotal = document.getElementById('queue-total');
 
     function formatMoney(amount, currency = 'USD') {
       return new Intl.NumberFormat('en-US', {
@@ -527,6 +586,14 @@
         month: 'short',
         day: 'numeric',
       }).format(new Date(value));
+    }
+
+    function humanizeStatus(value) {
+      return String(value || '')
+        .toLowerCase()
+        .split('_')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
     }
 
     async function api(path, options = {}) {
@@ -556,117 +623,77 @@
       element.className = `status${type ? ` ${type}` : ''}`;
     }
 
-    function renderCustomers() {
-      customerResults.innerHTML = '';
+    function updateSummary() {
+      const orderCount = state.bundles.reduce((sum, bundle) => sum + bundle.order_count, 0);
+      const itemCount = state.bundles.reduce((sum, bundle) => sum + bundle.total_items, 0);
+      const totalAmount = state.bundles.reduce((sum, bundle) => sum + Number(bundle.total_amount || 0), 0);
+      const currency = state.bundles[0]?.currency || 'USD';
 
-      if (!state.customers.length) {
-        customerResults.innerHTML = '<div class="empty">No customers matched that search.</div>';
-        return;
-      }
+      summaryOrders.textContent = String(orderCount);
+      summaryBundles.textContent = String(state.bundles.length);
+      summaryHold.textContent = state.includeOnHold ? 'Included' : 'Excluded';
 
-      for (const customer of state.customers) {
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = `customer-card${state.selectedCustomer?.id === customer.id ? ' selected' : ''}`;
-        card.innerHTML = `
-          <div class="customer-name">${customer.displayName}</div>
-          <div class="meta">${customer.email || customer.phone || 'No contact info'}</div>
-          <div class="small">${customer.location || 'No location on file'}</div>
-        `;
-        card.addEventListener('click', () => selectCustomer(customer));
-        customerResults.appendChild(card);
-      }
+      queueBundles.textContent = String(state.bundles.length);
+      queueOrders.textContent = String(orderCount);
+      queueItems.textContent = String(itemCount);
+      queueTotal.textContent = formatMoney(totalAmount, currency);
+
+      printAllButton.disabled = state.bundles.length === 0;
     }
 
-    function renderOrders() {
-      ordersList.innerHTML = '';
+    function renderBundles() {
+      bundleList.innerHTML = '';
 
-      if (!state.selectedCustomer) {
-        ordersEmpty.classList.remove('hidden');
-        ordersEmpty.textContent = 'No customer selected yet.';
-        ordersList.classList.add('hidden');
+      if (!state.bundles.length) {
+        emptyState.hidden = false;
         return;
       }
 
-      if (!state.orders.length) {
-        ordersEmpty.classList.remove('hidden');
-        ordersEmpty.textContent = 'This customer has no recent orders available to bundle.';
-        ordersList.classList.add('hidden');
-        return;
-      }
+      emptyState.hidden = true;
 
-      ordersEmpty.classList.add('hidden');
-      ordersList.classList.remove('hidden');
+      for (const bundle of state.bundles) {
+        const card = document.createElement('section');
+        card.className = 'bundle-card';
 
-      for (const order of state.orders) {
-        const card = document.createElement('label');
-        card.className = 'order-card';
-        const checked = state.selectedOrderIds.has(order.id) ? 'checked' : '';
-        const previewItems = order.lineItems.slice(0, 4).map(item => `
-          <div class="line-row">
-            <span>${item.quantity} × ${item.title}</span>
-            <span>${formatMoney(item.lineTotal, order.currency)}</span>
+        const orderRows = bundle.orders.map(order => `
+          <div class="order-row">
+            <div>
+              <div class="order-row-title">${order.name}</div>
+              <div class="meta">${formatDate(order.createdAt)} • ${humanizeStatus(order.displayFinancialStatus)}</div>
+              <div class="small">${order.totalQuantity} items • ${humanizeStatus(order.displayFulfillmentStatus)}</div>
+            </div>
+            <div class="order-row-right">
+              <div class="order-row-title">${formatMoney(order.totalPrice, order.currency)}</div>
+              <div class="small">${order.lineItems.slice(0, 2).map(item => `${item.quantity}x ${item.title}`).join(' • ') || 'No line items'}</div>
+            </div>
           </div>
         `).join('');
-        const previewMore = order.lineItems.length > 4 ? `<div class="small">+${order.lineItems.length - 4} more items</div>` : '';
 
         card.innerHTML = `
-          <div class="order-top">
-            <div class="order-check">
-              <input type="checkbox" data-order-id="${order.id}" ${checked}>
-              <div>
-                <div class="order-name">${order.name}</div>
-                <div class="meta">Placed ${formatDate(order.createdAt)}</div>
-              </div>
+          <div class="bundle-top">
+            <div>
+              <div class="bundle-name">${bundle.customer.displayName || 'Customer'}</div>
+              <div class="meta">${bundle.customer.email || 'No email on file'}</div>
             </div>
-            <div class="meta">${formatMoney(order.totalPrice, order.currency)}</div>
+            <div class="action-row">
+              <button class="btn-primary" type="button" data-print-key="${bundle.key}">Print Packet</button>
+            </div>
           </div>
-          <div class="chips">
-            <span class="chip">${order.displayFinancialStatus}</span>
-            <span class="chip">${order.displayFulfillmentStatus || 'Unfulfilled'}</span>
-            <span class="chip">${order.totalQuantity} items</span>
+
+          <div class="chip-row">
+            <span class="chip">${bundle.order_count} orders</span>
+            <span class="chip">${bundle.total_items} items</span>
+            <span class="chip">${formatMoney(bundle.total_amount, bundle.currency)}</span>
+            ${bundle.has_on_hold_orders ? '<span class="chip chip-warning">Contains On Hold</span>' : ''}
           </div>
-          <div class="line-preview">
-            ${previewItems}
-            ${previewMore}
+
+          <div class="order-stack">
+            ${orderRows}
           </div>
         `;
-        ordersList.appendChild(card);
-      }
 
-      ordersList.querySelectorAll('input[type="checkbox"]').forEach(input => {
-        input.addEventListener('change', event => {
-          const orderId = event.target.dataset.orderId;
-          if (event.target.checked) {
-            state.selectedOrderIds.add(orderId);
-          } else {
-            state.selectedOrderIds.delete(orderId);
-          }
-          updateSelectionSummary();
-        });
-      });
-    }
-
-    function updateSelectionSummary() {
-      const selectedOrders = state.orders.filter(order => state.selectedOrderIds.has(order.id));
-      const items = selectedOrders.reduce((sum, order) => sum + order.totalQuantity, 0);
-      const total = selectedOrders.reduce((sum, order) => sum + Number(order.totalPrice || 0), 0);
-      const currency = selectedOrders[0]?.currency || 'USD';
-
-      selectedCustomerEl.textContent = state.selectedCustomer?.displayName || 'None';
-      selectedOrdersEl.textContent = String(selectedOrders.length);
-      selectedItemsEl.textContent = String(items);
-      selectedTotalEl.textContent = formatMoney(total, currency);
-
-      const canGenerate = selectedOrders.length > 0 && state.selectedCustomer;
-      generateButton.disabled = !canGenerate;
-
-      if (!state.selectedCustomer) {
-        setStatus(bundleStatus, 'Select a customer first.');
-      } else if (!selectedOrders.length) {
-        setStatus(bundleStatus, 'Select at least one order to enable generation.');
-      } else {
-        setStatus(bundleStatus, `Ready to generate one packet for ${selectedOrders.length} order${selectedOrders.length === 1 ? '' : 's'}.`, 'success');
+        card.querySelector('[data-print-key]').addEventListener('click', () => printBundle(bundle));
+        bundleList.appendChild(card);
       }
     }
 
@@ -674,7 +701,7 @@
       historyList.innerHTML = '';
 
       if (!state.history.length) {
-        historyList.innerHTML = '<div class="empty">No bundled packets have been generated yet.</div>';
+        historyList.innerHTML = '<div class="empty" style="margin-top:18px;">No packets have been printed yet.</div>';
         return;
       }
 
@@ -683,9 +710,9 @@
         card.className = 'history-card';
         card.innerHTML = `
           <div>
-            <div class="order-name">${entry.customer_name || 'Customer'}</div>
-            <div class="meta">${entry.customer_email || 'No email'} • ${entry.order_count} orders • ${entry.total_items} items</div>
-            <div class="small">Generated ${formatDate(entry.created_at)} • ${formatMoney(entry.total_amount)}</div>
+            <div class="bundle-name" style="font-size:1rem; margin-bottom:4px;">${entry.customer_name || 'Customer'}</div>
+            <div class="meta">${entry.order_count} orders • ${entry.total_items} items • ${formatMoney(entry.total_amount)}</div>
+            <div class="small">Generated ${formatDate(entry.created_at)}</div>
           </div>
           <button type="button" class="btn-secondary">Open</button>
         `;
@@ -708,99 +735,100 @@
       renderHistory();
     }
 
-    async function searchCustomers() {
-      const query = customerQueryInput.value.trim();
-      if (query.length < 2) {
-        setStatus(searchStatus, 'Enter at least 2 characters to start.', 'error');
-        return;
-      }
-
-      setStatus(searchStatus, 'Searching Shopify customers…');
-      searchButton.disabled = true;
+    async function loadBundles() {
+      refreshButton.disabled = true;
+      printAllButton.disabled = true;
+      setStatus(queueStatus, 'Scanning Shopify open orders…');
 
       try {
-        const data = await api(`/api/customers/search?q=${encodeURIComponent(query)}`);
-        state.customers = data.customers || [];
-        renderCustomers();
-        setStatus(searchStatus, `Found ${state.customers.length} customer${state.customers.length === 1 ? '' : 's'}.`, 'success');
+        const data = await api(`/api/open-bundles?includeOnHold=${state.includeOnHold ? 'true' : 'false'}`);
+        state.bundles = data.bundles || [];
+        renderBundles();
+        updateSummary();
+
+        if (state.bundles.length) {
+          setStatus(queueStatus, `Loaded ${data.orderCount} open orders condensed into ${data.bundleCount} printable packet${data.bundleCount === 1 ? '' : 's'}.`, 'success');
+        } else {
+          setStatus(queueStatus, 'No open bundles matched the current filter.', 'success');
+        }
       } catch (error) {
-        state.customers = [];
-        renderCustomers();
-        setStatus(searchStatus, error.message, 'error');
+        state.bundles = [];
+        renderBundles();
+        updateSummary();
+        setStatus(queueStatus, error.message, 'error');
       } finally {
-        searchButton.disabled = false;
+        refreshButton.disabled = false;
       }
     }
 
-    async function selectCustomer(customer) {
-      state.selectedCustomer = customer;
-      state.selectedOrderIds = new Set();
-      ordersTitle.textContent = `${customer.displayName} Orders`;
-      ordersCopy.textContent = customer.email || customer.phone || 'Customer selected';
-      setStatus(bundleStatus, 'Loading orders…');
-      renderCustomers();
-      renderOrders();
-      updateSelectionSummary();
-
-      try {
-        const data = await api(`/api/orders?customerId=${encodeURIComponent(customer.id)}`);
-        state.orders = data.orders || [];
-        renderOrders();
-        updateSelectionSummary();
-      } catch (error) {
-        state.orders = [];
-        renderOrders();
-        setStatus(bundleStatus, error.message, 'error');
-      }
-    }
-
-    async function generateBundle() {
-      const orderIds = Array.from(state.selectedOrderIds);
-      if (!orderIds.length) return;
-
-      generateButton.disabled = true;
-      setStatus(bundleStatus, 'Generating bundled document…');
+    async function printBundle(bundle) {
+      setStatus(queueStatus, `Generating packet for ${bundle.customer.displayName || 'customer'}…`);
 
       try {
         const data = await api('/api/bundles', {
           method: 'POST',
           body: JSON.stringify({
             shop: state.shop,
-            orderIds,
+            orderIds: bundle.orderIds,
           }),
         });
+
         window.open(data.url, '_blank', 'noopener');
-        setStatus(bundleStatus, 'Document generated. It opened in a new tab.', 'success');
+        setStatus(queueStatus, `Packet opened for ${bundle.customer.displayName || 'customer'}.`, 'success');
         await loadHistory();
       } catch (error) {
-        setStatus(bundleStatus, error.message, 'error');
-      } finally {
-        generateButton.disabled = false;
-        updateSelectionSummary();
+        setStatus(queueStatus, error.message, 'error');
       }
     }
 
-    searchButton.addEventListener('click', searchCustomers);
-    customerQueryInput.addEventListener('keydown', event => {
-      if (event.key === 'Enter') {
-        searchCustomers();
+    async function printAllBundles() {
+      if (!state.bundles.length) return;
+
+      refreshButton.disabled = true;
+      printAllButton.disabled = true;
+      setStatus(queueStatus, `Generating ${state.bundles.length} packet${state.bundles.length === 1 ? '' : 's'} into one print view…`);
+
+      try {
+        const data = await api('/api/bundles/print-all', {
+          method: 'POST',
+          body: JSON.stringify({
+            shop: state.shop,
+            groups: state.bundles.map(bundle => bundle.orderIds),
+          }),
+        });
+
+        window.open(data.printAllUrl, '_blank', 'noopener');
+        setStatus(queueStatus, 'Combined print view opened in a new tab.', 'success');
+        await loadHistory();
+      } catch (error) {
+        setStatus(queueStatus, error.message, 'error');
+      } finally {
+        refreshButton.disabled = false;
+        updateSummary();
       }
+    }
+
+    includeOnHoldInput.addEventListener('change', async event => {
+      state.includeOnHold = event.target.checked;
+      updateSummary();
+      await loadBundles();
     });
-    generateButton.addEventListener('click', generateBundle);
+
+    refreshButton.addEventListener('click', loadBundles);
+    printAllButton.addEventListener('click', printAllBundles);
 
     async function init() {
       if (!state.shop) {
         shopPill.textContent = 'Missing shop parameter';
-        setStatus(searchStatus, 'Open this app from Shopify Admin so the shop parameter is present.', 'error');
+        setStatus(queueStatus, 'Open this app from Shopify Admin so the shop parameter is present.', 'error');
         return;
       }
 
       try {
         await loadShop();
-        await loadHistory();
+        await Promise.all([loadHistory(), loadBundles()]);
       } catch (error) {
-        setStatus(searchStatus, error.message, 'error');
-        setStatus(bundleStatus, error.message, 'error');
+        setStatus(queueStatus, error.message, 'error');
       }
     }
 

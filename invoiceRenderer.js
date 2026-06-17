@@ -59,7 +59,7 @@ function renderOrderLines(order) {
   }).join('');
 }
 
-export function renderBundleDocument(bundle) {
+function renderBundleSheet(bundle, extraClass = '') {
   const createdAt = bundle.created_at || new Date().toISOString();
   const shopInfo = bundle.shopInfo || {};
   const currency = bundle.currency || bundle.orders[0]?.currency || 'USD';
@@ -118,12 +118,56 @@ export function renderBundleDocument(bundle) {
     </section>
   `).join('');
 
+  return `
+    <section class="sheet ${extraClass}">
+      <header class="hero">
+        <div class="hero-top">
+          <div>
+            <div class="eyebrow">Combined Invoice Packet</div>
+            <h1>${escapeHtml(bundle.customer_name || 'Customer Orders')}</h1>
+            <p class="subtitle">${escapeHtml(bundle.customer_email || 'No email on file')} • Generated ${escapeHtml(formatDate(createdAt))}</p>
+          </div>
+          <div class="summary-card">
+            <div class="eyebrow">Prepared By</div>
+            <h3>${escapeHtml(shopInfo.name || bundle.shop || 'Shopify Store')}</h3>
+            <div class="muted">${escapeHtml(shopInfo.email || '')}</div>
+            <div class="muted">${escapeHtml(shopInfo.phone || '')}</div>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="eyebrow">Orders</div>
+            <div class="summary-value">${bundle.order_count}</div>
+            <div class="summary-caption">Selected orders in this print run</div>
+          </div>
+          <div class="summary-card">
+            <div class="eyebrow">Items</div>
+            <div class="summary-value">${bundle.total_items}</div>
+            <div class="summary-caption">Total quantity across all orders</div>
+          </div>
+          <div class="summary-card">
+            <div class="eyebrow">Combined Total</div>
+            <div class="summary-value">${formatMoney(bundle.total_amount, currency)}</div>
+            <div class="summary-caption">Grand total across all included orders</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="body">
+        ${orderSections}
+      </div>
+    </section>
+  `;
+}
+
+function renderDocumentShell(title, content) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(bundle.customer_name || 'Customer')} Bundle</title>
+  <title>${escapeHtml(title)}</title>
   <style>
     :root {
       --paper: #f7f0df;
@@ -179,6 +223,10 @@ export function renderBundleDocument(bundle) {
       border-radius: 24px;
       box-shadow: 0 22px 44px var(--shadow);
       overflow: hidden;
+    }
+
+    .sheet.page-break {
+      margin-top: 28px;
     }
 
     .hero {
@@ -386,6 +434,15 @@ export function renderBundleDocument(bundle) {
         border-radius: 0;
       }
 
+      .sheet.page-break {
+        margin-top: 0;
+        page-break-before: always;
+      }
+
+      .sheet.page-break:first-of-type {
+        page-break-before: auto;
+      }
+
       .order-card {
         page-break-inside: avoid;
       }
@@ -399,46 +456,17 @@ export function renderBundleDocument(bundle) {
   </div>
 
   <main class="document">
-    <section class="sheet">
-      <header class="hero">
-        <div class="hero-top">
-          <div>
-            <div class="eyebrow">Combined Invoice Packet</div>
-            <h1>${escapeHtml(bundle.customer_name || 'Customer Orders')}</h1>
-            <p class="subtitle">${escapeHtml(bundle.customer_email || 'No email on file')} • Generated ${escapeHtml(formatDate(createdAt))}</p>
-          </div>
-          <div class="summary-card">
-            <div class="eyebrow">Prepared By</div>
-            <h3>${escapeHtml(shopInfo.name || bundle.shop || 'Shopify Store')}</h3>
-            <div class="muted">${escapeHtml(shopInfo.email || '')}</div>
-            <div class="muted">${escapeHtml(shopInfo.phone || '')}</div>
-          </div>
-        </div>
-
-        <div class="summary-grid">
-          <div class="summary-card">
-            <div class="eyebrow">Orders</div>
-            <div class="summary-value">${bundle.order_count}</div>
-            <div class="summary-caption">Selected orders in this print run</div>
-          </div>
-          <div class="summary-card">
-            <div class="eyebrow">Items</div>
-            <div class="summary-value">${bundle.total_items}</div>
-            <div class="summary-caption">Total quantity across all orders</div>
-          </div>
-          <div class="summary-card">
-            <div class="eyebrow">Combined Total</div>
-            <div class="summary-value">${formatMoney(bundle.total_amount, currency)}</div>
-            <div class="summary-caption">Grand total across all included orders</div>
-          </div>
-        </div>
-      </header>
-
-      <div class="body">
-        ${orderSections}
-      </div>
-    </section>
+    ${content}
   </main>
 </body>
 </html>`;
+}
+
+export function renderBundleDocument(bundle) {
+  return renderDocumentShell(`${bundle.customer_name || 'Customer'} Bundle`, renderBundleSheet(bundle));
+}
+
+export function renderBundleBatchDocument(bundles) {
+  const sheets = bundles.map((bundle, index) => renderBundleSheet(bundle, index === 0 ? '' : 'page-break')).join('');
+  return renderDocumentShell('Combined Bundles', sheets);
 }
