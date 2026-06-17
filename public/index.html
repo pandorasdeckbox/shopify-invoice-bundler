@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice Bundler</title>
+  <style>
+    :root {
+      --canvas: #f3ede2;
+      --canvas-deep: #e3d3b7;
+      --panel: rgba(255, 249, 239, 0.9);
+      --panel-strong: #fffdf7;
+      --ink: #1f1a14;
+      --muted: #6f6458;
+      --line: rgba(112, 82, 50, 0.18);
+      --accent: #a24f2d;
+      --accent-deep: #6f2b12;
+      --accent-soft: #ead7c5;
+      --success: #246b45;
+      --danger: #8f2d20;
+      --shadow: 0 22px 50px rgba(72, 49, 24, 0.14);
+      --radius-lg: 28px;
+      --radius-md: 18px;
+      --radius-sm: 12px;
+      --font-body: "Avenir Next", "Segoe UI", sans-serif;
+      --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.75), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(162,79,45,0.12), transparent 28%),
+        linear-gradient(180deg, var(--canvas) 0%, var(--canvas-deep) 100%);
+      font-family: var(--font-body);
+    }
+
+    .shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .masthead {
+      background: linear-gradient(145deg, rgba(255,255,255,0.72), rgba(255,255,255,0.44));
+      border: 1px solid rgba(112, 82, 50, 0.16);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      display: grid;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .masthead-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 6vw, 4.8rem);
+      line-height: 0.93;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin-top: 12px;
+      max-width: 52ch;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.55;
+    }
+
+    .shop-pill {
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 12px 16px;
+      white-space: nowrap;
+      font-size: 0.95rem;
+      align-self: flex-start;
+    }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .summary-card,
+    .panel,
+    .customer-card,
+    .order-card,
+    .history-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .summary-card {
+      padding: 18px;
+    }
+
+    .summary-value {
+      margin-top: 8px;
+      font-family: var(--font-display);
+      font-size: 2rem;
+    }
+
+    .summary-note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .panel h2 {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+
+    .panel-copy {
+      color: var(--muted);
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      border: 1px solid rgba(112, 82, 50, 0.24);
+      background: var(--panel-strong);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 14px 18px;
+      font: inherit;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(162, 79, 45, 0.12);
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 13px 18px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover { opacity: 0.92; }
+    button:active { transform: translateY(1px); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.8);
+      border: 1px solid rgba(112, 82, 50, 0.18);
+      color: var(--ink);
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .customer-card,
+    .order-card,
+    .history-card {
+      padding: 16px;
+    }
+
+    .customer-card {
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease;
+    }
+
+    .customer-card:hover,
+    .customer-card.selected {
+      transform: translateY(-2px);
+      border-color: rgba(162, 79, 45, 0.45);
+    }
+
+    .customer-name,
+    .order-name {
+      font-weight: 800;
+      font-size: 1.05rem;
+      margin-bottom: 6px;
+    }
+
+    .meta,
+    .small {
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .order-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .order-card {
+      display: grid;
+      gap: 12px;
+    }
+
+    .order-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .order-check {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .order-check input {
+      margin-top: 5px;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      background: var(--accent-soft);
+      border: 1px solid rgba(162, 79, 45, 0.2);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.82rem;
+    }
+
+    .line-preview {
+      border-top: 1px dashed rgba(112, 82, 50, 0.2);
+      padding-top: 10px;
+      display: grid;
+      gap: 6px;
+      font-size: 0.93rem;
+    }
+
+    .line-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .summary-panel {
+      position: sticky;
+      top: 24px;
+    }
+
+    .summary-panel h3,
+    .history-panel h3 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      margin-bottom: 8px;
+    }
+
+    .selection-stats {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .selection-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.98rem;
+    }
+
+    .selection-row strong {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .history-card {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .status {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.65);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+    }
+
+    .status.error {
+      color: var(--danger);
+      border-color: rgba(143, 45, 32, 0.22);
+      background: rgba(143, 45, 32, 0.08);
+    }
+
+    .status.success {
+      color: var(--success);
+      border-color: rgba(36, 107, 69, 0.24);
+      background: rgba(36, 107, 69, 0.08);
+    }
+
+    .empty {
+      padding: 20px;
+      border: 1px dashed rgba(112, 82, 50, 0.24);
+      border-radius: var(--radius-md);
+      color: var(--muted);
+      text-align: center;
+      background: rgba(255,255,255,0.36);
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 1024px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        padding: 14px;
+      }
+
+      .masthead,
+      .panel {
+        padding: 18px;
+      }
+
+      .masthead-top,
+      .order-top,
+      .history-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .search-row {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="masthead">
+      <div class="masthead-top">
+        <div>
+          <div class="eyebrow">Pandora's Deck Box Internal Tool</div>
+          <h1>Invoice<br>Bundler</h1>
+          <p class="subtitle">Find one customer, select their orders, and print a single combined invoice packet instead of juggling separate sheets.</p>
+        </div>
+        <div class="shop-pill" id="shop-pill">Loading shop…</div>
+      </div>
+
+      <div class="summary-row">
+        <div class="summary-card">
+          <div class="eyebrow">Workflow</div>
+          <div class="summary-value">1 → 1</div>
+          <div class="summary-note">Many orders in, one printable document out.</div>
+        </div>
+        <div class="summary-card">
+          <div class="eyebrow">Search</div>
+          <div class="summary-value">Customers</div>
+          <div class="summary-note">Name, email, or phone search across Shopify customers.</div>
+        </div>
+        <div class="summary-card">
+          <div class="eyebrow">Output</div>
+          <div class="summary-value">History</div>
+          <div class="summary-note">Reopen old bundled packets without rebuilding them.</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="stack">
+        <section class="panel">
+          <h2>Find Customer</h2>
+          <p class="panel-copy">Search by email when possible for the cleanest match. Name and phone searches work too.</p>
+          <div class="search-row">
+            <input id="customer-query" type="text" placeholder="Search by email, name, or phone">
+            <button id="search-btn" class="btn-primary">Search</button>
+          </div>
+          <div id="search-status" class="status">Enter at least 2 characters to start.</div>
+          <div id="customer-results" class="stack" style="margin-top:16px;"></div>
+        </section>
+
+        <section class="panel history-panel">
+          <h3>Recent Bundles</h3>
+          <p class="panel-copy">The last 25 generated packets for this store.</p>
+          <div id="history-list" class="history-list"></div>
+        </section>
+      </aside>
+
+      <main class="stack">
+        <section class="panel">
+          <h2 id="orders-title">Orders</h2>
+          <p id="orders-copy" class="panel-copy">Choose a customer on the left to load their recent orders.</p>
+          <div id="orders-empty" class="empty">No customer selected yet.</div>
+          <div id="orders-list" class="order-grid hidden"></div>
+        </section>
+
+        <section class="panel summary-panel">
+          <h3>Selected Bundle</h3>
+          <p class="panel-copy">Only orders from one customer can be bundled into the same print packet.</p>
+          <div class="selection-stats">
+            <div class="selection-row"><span>Customer</span><strong id="selected-customer">None</strong></div>
+            <div class="selection-row"><span>Orders</span><strong id="selected-orders">0</strong></div>
+            <div class="selection-row"><span>Items</span><strong id="selected-items">0</strong></div>
+            <div class="selection-row"><span>Total</span><strong id="selected-total">$0.00</strong></div>
+          </div>
+          <button id="generate-btn" class="btn-primary" disabled>Generate Combined Packet</button>
+          <div id="bundle-status" class="status">Select at least one order to enable generation.</div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      shop: new URLSearchParams(window.location.search).get('shop') || '',
+      shopName: '',
+      customers: [],
+      selectedCustomer: null,
+      orders: [],
+      selectedOrderIds: new Set(),
+      history: [],
+    };
+
+    const customerQueryInput = document.getElementById('customer-query');
+    const customerResults = document.getElementById('customer-results');
+    const searchStatus = document.getElementById('search-status');
+    const searchButton = document.getElementById('search-btn');
+    const shopPill = document.getElementById('shop-pill');
+    const ordersTitle = document.getElementById('orders-title');
+    const ordersCopy = document.getElementById('orders-copy');
+    const ordersEmpty = document.getElementById('orders-empty');
+    const ordersList = document.getElementById('orders-list');
+    const selectedCustomerEl = document.getElementById('selected-customer');
+    const selectedOrdersEl = document.getElementById('selected-orders');
+    const selectedItemsEl = document.getElementById('selected-items');
+    const selectedTotalEl = document.getElementById('selected-total');
+    const generateButton = document.getElementById('generate-btn');
+    const bundleStatus = document.getElementById('bundle-status');
+    const historyList = document.getElementById('history-list');
+
+    function formatMoney(amount, currency = 'USD') {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(Number(amount || 0));
+    }
+
+    function formatDate(value) {
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }).format(new Date(value));
+    }
+
+    async function api(path, options = {}) {
+      const url = new URL(path, window.location.origin);
+      if (!url.searchParams.has('shop') && state.shop) {
+        url.searchParams.set('shop', state.shop);
+      }
+
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(options.headers || {}),
+        },
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || `Request failed with status ${response.status}`);
+      }
+
+      return response.json();
+    }
+
+    function setStatus(element, message, type = '') {
+      element.textContent = message;
+      element.className = `status${type ? ` ${type}` : ''}`;
+    }
+
+    function renderCustomers() {
+      customerResults.innerHTML = '';
+
+      if (!state.customers.length) {
+        customerResults.innerHTML = '<div class="empty">No customers matched that search.</div>';
+        return;
+      }
+
+      for (const customer of state.customers) {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `customer-card${state.selectedCustomer?.id === customer.id ? ' selected' : ''}`;
+        card.innerHTML = `
+          <div class="customer-name">${customer.displayName}</div>
+          <div class="meta">${customer.email || customer.phone || 'No contact info'}</div>
+          <div class="small">${customer.location || 'No location on file'}</div>
+        `;
+        card.addEventListener('click', () => selectCustomer(customer));
+        customerResults.appendChild(card);
+      }
+    }
+
+    function renderOrders() {
+      ordersList.innerHTML = '';
+
+      if (!state.selectedCustomer) {
+        ordersEmpty.classList.remove('hidden');
+        ordersEmpty.textContent = 'No customer selected yet.';
+        ordersList.classList.add('hidden');
+        return;
+      }
+
+      if (!state.orders.length) {
+        ordersEmpty.classList.remove('hidden');
+        ordersEmpty.textContent = 'This customer has no recent orders available to bundle.';
+        ordersList.classList.add('hidden');
+        return;
+      }
+
+      ordersEmpty.classList.add('hidden');
+      ordersList.classList.remove('hidden');
+
+      for (const order of state.orders) {
+        const card = document.createElement('label');
+        card.className = 'order-card';
+        const checked = state.selectedOrderIds.has(order.id) ? 'checked' : '';
+        const previewItems = order.lineItems.slice(0, 4).map(item => `
+          <div class="line-row">
+            <span>${item.quantity} × ${item.title}</span>
+            <span>${formatMoney(item.lineTotal, order.currency)}</span>
+          </div>
+        `).join('');
+        const previewMore = order.lineItems.length > 4 ? `<div class="small">+${order.lineItems.length - 4} more items</div>` : '';
+
+        card.innerHTML = `
+          <div class="order-top">
+            <div class="order-check">
+              <input type="checkbox" data-order-id="${order.id}" ${checked}>
+              <div>
+                <div class="order-name">${order.name}</div>
+                <div class="meta">Placed ${formatDate(order.createdAt)}</div>
+              </div>
+            </div>
+            <div class="meta">${formatMoney(order.totalPrice, order.currency)}</div>
+          </div>
+          <div class="chips">
+            <span class="chip">${order.displayFinancialStatus}</span>
+            <span class="chip">${order.displayFulfillmentStatus || 'Unfulfilled'}</span>
+            <span class="chip">${order.totalQuantity} items</span>
+          </div>
+          <div class="line-preview">
+            ${previewItems}
+            ${previewMore}
+          </div>
+        `;
+        ordersList.appendChild(card);
+      }
+
+      ordersList.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        input.addEventListener('change', event => {
+          const orderId = event.target.dataset.orderId;
+          if (event.target.checked) {
+            state.selectedOrderIds.add(orderId);
+          } else {
+            state.selectedOrderIds.delete(orderId);
+          }
+          updateSelectionSummary();
+        });
+      });
+    }
+
+    function updateSelectionSummary() {
+      const selectedOrders = state.orders.filter(order => state.selectedOrderIds.has(order.id));
+      const items = selectedOrders.reduce((sum, order) => sum + order.totalQuantity, 0);
+      const total = selectedOrders.reduce((sum, order) => sum + Number(order.totalPrice || 0), 0);
+      const currency = selectedOrders[0]?.currency || 'USD';
+
+      selectedCustomerEl.textContent = state.selectedCustomer?.displayName || 'None';
+      selectedOrdersEl.textContent = String(selectedOrders.length);
+      selectedItemsEl.textContent = String(items);
+      selectedTotalEl.textContent = formatMoney(total, currency);
+
+      const canGenerate = selectedOrders.length > 0 && state.selectedCustomer;
+      generateButton.disabled = !canGenerate;
+
+      if (!state.selectedCustomer) {
+        setStatus(bundleStatus, 'Select a customer first.');
+      } else if (!selectedOrders.length) {
+        setStatus(bundleStatus, 'Select at least one order to enable generation.');
+      } else {
+        setStatus(bundleStatus, `Ready to generate one packet for ${selectedOrders.length} order${selectedOrders.length === 1 ? '' : 's'}.`, 'success');
+      }
+    }
+
+    function renderHistory() {
+      historyList.innerHTML = '';
+
+      if (!state.history.length) {
+        historyList.innerHTML = '<div class="empty">No bundled packets have been generated yet.</div>';
+        return;
+      }
+
+      for (const entry of state.history) {
+        const card = document.createElement('div');
+        card.className = 'history-card';
+        card.innerHTML = `
+          <div>
+            <div class="order-name">${entry.customer_name || 'Customer'}</div>
+            <div class="meta">${entry.customer_email || 'No email'} • ${entry.order_count} orders • ${entry.total_items} items</div>
+            <div class="small">Generated ${formatDate(entry.created_at)} • ${formatMoney(entry.total_amount)}</div>
+          </div>
+          <button type="button" class="btn-secondary">Open</button>
+        `;
+        card.querySelector('button').addEventListener('click', () => {
+          window.open(`/print/${entry.id}?shop=${encodeURIComponent(state.shop)}`, '_blank', 'noopener');
+        });
+        historyList.appendChild(card);
+      }
+    }
+
+    async function loadShop() {
+      const data = await api('/api/shop');
+      state.shopName = data.name || state.shop;
+      shopPill.textContent = state.shopName;
+    }
+
+    async function loadHistory() {
+      const data = await api('/api/history');
+      state.history = data.history || [];
+      renderHistory();
+    }
+
+    async function searchCustomers() {
+      const query = customerQueryInput.value.trim();
+      if (query.length < 2) {
+        setStatus(searchStatus, 'Enter at least 2 characters to start.', 'error');
+        return;
+      }
+
+      setStatus(searchStatus, 'Searching Shopify customers…');
+      searchButton.disabled = true;
+
+      try {
+        const data = await api(`/api/customers/search?q=${encodeURIComponent(query)}`);
+        state.customers = data.customers || [];
+        renderCustomers();
+        setStatus(searchStatus, `Found ${state.customers.length} customer${state.customers.length === 1 ? '' : 's'}.`, 'success');
+      } catch (error) {
+        state.customers = [];
+        renderCustomers();
+        setStatus(searchStatus, error.message, 'error');
+      } finally {
+        searchButton.disabled = false;
+      }
+    }
+
+    async function selectCustomer(customer) {
+      state.selectedCustomer = customer;
+      state.selectedOrderIds = new Set();
+      ordersTitle.textContent = `${customer.displayName} Orders`;
+      ordersCopy.textContent = customer.email || customer.phone || 'Customer selected';
+      setStatus(bundleStatus, 'Loading orders…');
+      renderCustomers();
+      renderOrders();
+      updateSelectionSummary();
+
+      try {
+        const data = await api(`/api/orders?customerId=${encodeURIComponent(customer.id)}`);
+        state.orders = data.orders || [];
+        renderOrders();
+        updateSelectionSummary();
+      } catch (error) {
+        state.orders = [];
+        renderOrders();
+        setStatus(bundleStatus, error.message, 'error');
+      }
+    }
+
+    async function generateBundle() {
+      const orderIds = Array.from(state.selectedOrderIds);
+      if (!orderIds.length) return;
+
+      generateButton.disabled = true;
+      setStatus(bundleStatus, 'Generating bundled document…');
+
+      try {
+        const data = await api('/api/bundles', {
+          method: 'POST',
+          body: JSON.stringify({
+            shop: state.shop,
+            orderIds,
+          }),
+        });
+        window.open(data.url, '_blank', 'noopener');
+        setStatus(bundleStatus, 'Document generated. It opened in a new tab.', 'success');
+        await loadHistory();
+      } catch (error) {
+        setStatus(bundleStatus, error.message, 'error');
+      } finally {
+        generateButton.disabled = false;
+        updateSelectionSummary();
+      }
+    }
+
+    searchButton.addEventListener('click', searchCustomers);
+    customerQueryInput.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        searchCustomers();
+      }
+    });
+    generateButton.addEventListener('click', generateBundle);
+
+    async function init() {
+      if (!state.shop) {
+        shopPill.textContent = 'Missing shop parameter';
+        setStatus(searchStatus, 'Open this app from Shopify Admin so the shop parameter is present.', 'error');
+        return;
+      }
+
+      try {
+        await loadShop();
+        await loadHistory();
+      } catch (error) {
+        setStatus(searchStatus, error.message, 'error');
+        setStatus(bundleStatus, error.message, 'error');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
