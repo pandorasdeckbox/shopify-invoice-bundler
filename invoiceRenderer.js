@@ -122,7 +122,7 @@ function renderBundleSheet(bundle, extraClass = '') {
       </div>
       `}
 
-      ${sharedShippingAddress && sharedBillingAddress ? '' : `
+      ${sharedShippingAddress || sharedBillingAddress ? `
       <div class="address-grid address-grid-compact${sharedShippingAddress || sharedBillingAddress ? ' single-address-grid' : ''}">
         ${sharedShippingAddress ? '' : `
         <div class="address-card">
@@ -137,7 +137,7 @@ function renderBundleSheet(bundle, extraClass = '') {
         </div>
         `}
       </div>
-      `}
+      ` : ''}
 
       <table class="line-table">
         <thead>
