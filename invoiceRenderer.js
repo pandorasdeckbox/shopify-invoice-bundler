@@ -59,14 +59,35 @@ function normalizeAddress(address) {
   return fields.map(field => String(address[field] ?? '').trim()).join('|');
 }
 
-function getSharedAddress(addresses) {
-  if (!addresses.length) return null;
+function getPreferredAddress(addresses) {
+  const rankedAddresses = [];
+  const addressCounts = new Map();
 
-  const [firstAddress] = addresses;
-  const normalized = normalizeAddress(firstAddress);
-  if (normalized === null) return null;
+  for (const address of addresses) {
+    const normalized = normalizeAddress(address);
+    if (normalized === null) continue;
 
-  return addresses.every(address => normalizeAddress(address) === normalized) ? firstAddress : null;
+    if (!addressCounts.has(normalized)) {
+      addressCounts.set(normalized, rankedAddresses.length);
+      rankedAddresses.push({
+        address,
+        count: 1,
+      });
+      continue;
+    }
+
+    rankedAddresses[addressCounts.get(normalized)].count += 1;
+  }
+
+  if (!rankedAddresses.length) return null;
+
+  return rankedAddresses.reduce((best, candidate) => {
+    if (!best || candidate.count > best.count) {
+      return candidate;
+    }
+
+    return best;
+  }, null)?.address ?? null;
 }
 
 function renderOrderLines(order) {
@@ -91,9 +112,9 @@ function renderBundleSheet(bundle, extraClass = '') {
   const createdAt = bundle.created_at || new Date().toISOString();
   const shopInfo = bundle.shopInfo || {};
   const currency = bundle.currency || bundle.orders[0]?.currency || 'USD';
-  const sharedShippingAddress = getSharedAddress(bundle.orders.map(order => order.shippingAddress));
-  const sharedBillingAddress = getSharedAddress(bundle.orders.map(order => order.billingAddress));
-  const hasSharedAddressBlock = Boolean(sharedShippingAddress || sharedBillingAddress);
+  const preferredShippingAddress = getPreferredAddress(bundle.orders.map(order => order.shippingAddress));
+  const preferredBillingAddress = getPreferredAddress(bundle.orders.map(order => order.billingAddress));
+  const hasBundleAddressBlock = Boolean(preferredShippingAddress || preferredBillingAddress);
 
   const orderSections = bundle.orders.map(order => `
     <section class="order-card">
@@ -108,36 +129,6 @@ function renderBundleSheet(bundle, extraClass = '') {
           <span class="pill muted-pill">${escapeHtml(order.displayFulfillmentStatus || 'Unfulfilled')}</span>
         </div>
       </div>
-
-      ${sharedShippingAddress || sharedBillingAddress ? '' : `
-      <div class="address-grid">
-        <div class="address-card">
-          <div class="eyebrow">Ship To</div>
-          ${renderAddress(order.shippingAddress)}
-        </div>
-        <div class="address-card">
-          <div class="eyebrow">Bill To</div>
-          ${renderAddress(order.billingAddress)}
-        </div>
-      </div>
-      `}
-
-      ${sharedShippingAddress || sharedBillingAddress ? `
-      <div class="address-grid address-grid-compact${sharedShippingAddress || sharedBillingAddress ? ' single-address-grid' : ''}">
-        ${sharedShippingAddress ? '' : `
-        <div class="address-card">
-          <div class="eyebrow">Ship To</div>
-          ${renderAddress(order.shippingAddress)}
-        </div>
-        `}
-        ${sharedBillingAddress ? '' : `
-        <div class="address-card">
-          <div class="eyebrow">Bill To</div>
-          ${renderAddress(order.billingAddress)}
-        </div>
-        `}
-      </div>
-      ` : ''}
 
       <table class="line-table">
         <thead>
@@ -203,18 +194,18 @@ function renderBundleSheet(bundle, extraClass = '') {
           </div>
         </div>
 
-        ${hasSharedAddressBlock ? `
-        <div class="address-grid bundle-address-grid${sharedShippingAddress && sharedBillingAddress ? '' : ' single-address-grid'}">
-          ${sharedShippingAddress ? `
+        ${hasBundleAddressBlock ? `
+        <div class="address-grid bundle-address-grid${preferredShippingAddress && preferredBillingAddress ? '' : ' single-address-grid'}">
+          ${preferredShippingAddress ? `
           <div class="address-card">
             <div class="eyebrow">Ship To</div>
-            ${renderAddress(sharedShippingAddress)}
+            ${renderAddress(preferredShippingAddress)}
           </div>
           ` : ''}
-          ${sharedBillingAddress ? `
+          ${preferredBillingAddress ? `
           <div class="address-card">
             <div class="eyebrow">Bill To</div>
-            ${renderAddress(sharedBillingAddress)}
+            ${renderAddress(preferredBillingAddress)}
           </div>
           ` : ''}
         </div>
@@ -422,10 +413,6 @@ function renderDocumentShell(title, content) {
       margin-bottom: 0;
     }
 
-    .address-grid-compact {
-      margin-bottom: 8px;
-    }
-
     .single-address-grid {
       grid-template-columns: minmax(0, 1fr);
     }
@@ -625,10 +612,6 @@ function renderDocumentShell(title, content) {
 
       .bundle-address-grid {
         margin-top: 6px;
-      }
-
-      .address-grid-compact {
-        margin-bottom: 6px;
       }
 
       .pill {
