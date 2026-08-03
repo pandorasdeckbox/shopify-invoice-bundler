@@ -914,37 +914,6 @@ app.get('/api/history', async (req, res) => {
   }
 });
 
-app.get('/print/:id', async (req, res) => {
-  try {
-    const session = await verifySession(req, res);
-    if (!session) return;
-
-    const bundleId = Number(req.params.id);
-    if (!Number.isInteger(bundleId)) {
-      return res.status(400).send('Invalid bundle id');
-    }
-
-    const bundle = await getBundleById(session.shop, bundleId);
-    if (!bundle) {
-      return res.status(404).send('Bundle not found');
-    }
-
-    const shopInfo = await fetchShopInfo(session);
-    const html = renderBundleDocument({
-      ...bundle,
-      shop: session.shop,
-      shopInfo,
-      currency: bundle.orders[0]?.currency || 'USD',
-    });
-
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(html);
-  } catch (error) {
-    log('ERROR', 'Failed to render print document', { error: error.message });
-    res.status(500).send(`Failed to render bundle: ${error.message}`);
-  }
-});
-
 app.get('/print/all', async (req, res) => {
   try {
     const session = await verifySession(req, res);
@@ -977,6 +946,37 @@ app.get('/print/all', async (req, res) => {
   } catch (error) {
     log('ERROR', 'Failed to render print-all document', { error: error.message });
     res.status(500).send(`Failed to render print-all bundle: ${error.message}`);
+  }
+});
+
+app.get('/print/:id', async (req, res) => {
+  try {
+    const session = await verifySession(req, res);
+    if (!session) return;
+
+    const bundleId = Number(req.params.id);
+    if (!Number.isInteger(bundleId)) {
+      return res.status(400).send('Invalid bundle id');
+    }
+
+    const bundle = await getBundleById(session.shop, bundleId);
+    if (!bundle) {
+      return res.status(404).send('Bundle not found');
+    }
+
+    const shopInfo = await fetchShopInfo(session);
+    const html = renderBundleDocument({
+      ...bundle,
+      shop: session.shop,
+      shopInfo,
+      currency: bundle.orders[0]?.currency || 'USD',
+    });
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (error) {
+    log('ERROR', 'Failed to render print document', { error: error.message });
+    res.status(500).send(`Failed to render bundle: ${error.message}`);
   }
 });
 

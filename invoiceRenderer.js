@@ -186,6 +186,8 @@ function renderDocumentShell(title, content) {
       background: radial-gradient(circle at top, #efe0c3 0%, #e3d2b0 36%, #d5c09c 100%);
       color: var(--ink);
       font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      font-size: 13px;
+      line-height: 1.25;
     }
 
     .toolbar {
@@ -193,9 +195,9 @@ function renderDocumentShell(title, content) {
       top: 0;
       z-index: 10;
       display: flex;
-      gap: 12px;
+      gap: 8px;
       justify-content: flex-end;
-      padding: 14px 18px;
+      padding: 10px 14px;
       background: rgba(247, 240, 223, 0.94);
       backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--border);
@@ -205,7 +207,7 @@ function renderDocumentShell(title, content) {
       border: 1px solid var(--ink);
       background: var(--ink);
       color: var(--paper-2);
-      padding: 10px 16px;
+      padding: 8px 12px;
       border-radius: 999px;
       font: inherit;
       cursor: pointer;
@@ -213,24 +215,24 @@ function renderDocumentShell(title, content) {
 
     .document {
       max-width: 960px;
-      margin: 28px auto 40px;
-      padding: 0 18px;
+      margin: 16px auto 24px;
+      padding: 0 12px;
     }
 
     .sheet {
       background: linear-gradient(180deg, var(--paper-2) 0%, var(--paper) 100%);
       border: 1px solid var(--border);
-      border-radius: 24px;
-      box-shadow: 0 22px 44px var(--shadow);
+      border-radius: 16px;
+      box-shadow: 0 14px 28px var(--shadow);
       overflow: hidden;
     }
 
     .sheet.page-break {
-      margin-top: 28px;
+      margin-top: 16px;
     }
 
     .hero {
-      padding: 34px;
+      padding: 18px 20px 14px;
       background:
         linear-gradient(145deg, rgba(143, 75, 42, 0.12), transparent 45%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
@@ -240,55 +242,56 @@ function renderDocumentShell(title, content) {
     .hero-top {
       display: flex;
       justify-content: space-between;
-      gap: 20px;
+      gap: 12px;
       align-items: flex-start;
-      margin-bottom: 28px;
+      margin-bottom: 12px;
     }
 
     .eyebrow {
-      font-size: 11px;
-      letter-spacing: 0.18em;
+      font-size: 9px;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
 
     h1, h2, h3, p { margin: 0; }
-    h1 { font-size: clamp(32px, 5vw, 50px); line-height: 0.95; }
-    h2 { font-size: 24px; margin-bottom: 6px; }
-    .subtitle { color: var(--muted); margin-top: 10px; max-width: 52ch; }
+    h1 { font-size: clamp(22px, 3.6vw, 32px); line-height: 1; }
+    h2 { font-size: 18px; margin-bottom: 2px; }
+    h3 { font-size: 15px; }
+    .subtitle { color: var(--muted); margin-top: 4px; max-width: 52ch; font-size: 12px; }
 
     .summary-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
     }
 
     .summary-card, .address-card, .totals-card, .note-box, .shipping-box {
       background: rgba(255, 255, 255, 0.45);
       border: 1px solid rgba(143, 75, 42, 0.15);
-      border-radius: 18px;
-      padding: 16px;
+      border-radius: 12px;
+      padding: 10px 12px;
     }
 
     .summary-value {
-      font-size: 28px;
+      font-size: 20px;
       font-weight: 700;
-      margin-top: 6px;
+      margin-top: 2px;
     }
 
     .summary-caption {
       color: var(--muted);
-      margin-top: 8px;
-      font-size: 14px;
+      margin-top: 3px;
+      font-size: 11px;
     }
 
     .body {
-      padding: 26px 34px 34px;
+      padding: 12px 20px 16px;
     }
 
     .order-card {
-      padding: 26px 0;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border);
     }
 
@@ -297,28 +300,37 @@ function renderDocumentShell(title, content) {
     .order-head {
       display: flex;
       justify-content: space-between;
-      gap: 16px;
+      gap: 10px;
       align-items: flex-start;
-      margin-bottom: 18px;
+      margin-bottom: 10px;
     }
 
     .order-meta, .muted, .item-meta {
       color: var(--muted);
     }
 
+    .order-meta, .muted {
+      font-size: 11px;
+    }
+
+    .item-meta {
+      font-size: 10px;
+      line-height: 1.2;
+    }
+
     .status-stack {
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
-      gap: 8px;
+      gap: 6px;
     }
 
     .pill {
       border: 1px solid rgba(143, 75, 42, 0.2);
       background: var(--accent-soft);
       border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 13px;
+      padding: 4px 8px;
+      font-size: 11px;
       white-space: nowrap;
     }
 
@@ -329,30 +341,32 @@ function renderDocumentShell(title, content) {
     .address-grid, .totals-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 14px;
-      margin-bottom: 18px;
+      gap: 8px;
+      margin-bottom: 10px;
     }
 
     .line-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 18px;
+      margin-bottom: 10px;
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 12px;
       overflow: hidden;
+      font-size: 11px;
     }
 
     .line-table th,
     .line-table td {
-      padding: 14px 16px;
+      padding: 6px 8px;
       text-align: left;
       border-bottom: 1px solid rgba(199, 184, 156, 0.6);
+      vertical-align: top;
     }
 
     .line-table thead th {
       background: rgba(143, 75, 42, 0.08);
-      font-size: 12px;
-      letter-spacing: 0.12em;
+      font-size: 9px;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
     }
 
@@ -367,14 +381,15 @@ function renderDocumentShell(title, content) {
 
     .item-title {
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 1px;
+      line-height: 1.2;
     }
 
     .totals-row {
       display: flex;
       justify-content: space-between;
       gap: 12px;
-      padding: 8px 0;
+      padding: 4px 0;
       border-bottom: 1px solid rgba(199, 184, 156, 0.6);
     }
 
@@ -384,8 +399,8 @@ function renderDocumentShell(title, content) {
     }
 
     .totals-row.grand {
-      font-size: 20px;
-      padding-top: 12px;
+      font-size: 15px;
+      padding-top: 6px;
     }
 
     .money {
@@ -394,14 +409,26 @@ function renderDocumentShell(title, content) {
     }
 
     .note-box p {
-      margin-top: 8px;
-      line-height: 1.5;
+      margin-top: 4px;
+      line-height: 1.25;
       white-space: pre-wrap;
+      font-size: 11px;
+    }
+
+    .shipping-box,
+    .note-box,
+    .address-card,
+    .totals-card {
+      break-inside: avoid;
     }
 
     @media (max-width: 720px) {
       .hero,
-      .body { padding: 22px; }
+      .body { padding: 16px; }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
 
       .hero-top,
       .order-head {
@@ -414,8 +441,15 @@ function renderDocumentShell(title, content) {
     }
 
     @media print {
+      @page {
+        size: auto;
+        margin: 0.32in;
+      }
+
       body {
         background: white;
+        font-size: 10px;
+        line-height: 1.15;
       }
 
       .toolbar {
@@ -432,6 +466,100 @@ function renderDocumentShell(title, content) {
         border: none;
         box-shadow: none;
         border-radius: 0;
+      }
+
+      .hero {
+        padding: 10px 0 8px;
+      }
+
+      .body {
+        padding: 8px 0 0;
+      }
+
+      .hero-top {
+        margin-bottom: 8px;
+        gap: 8px;
+      }
+
+      h1 {
+        font-size: 18px;
+      }
+
+      h2 {
+        font-size: 13px;
+      }
+
+      h3 {
+        font-size: 12px;
+      }
+
+      .subtitle,
+      .summary-caption,
+      .order-meta,
+      .muted,
+      .item-meta,
+      .note-box p {
+        font-size: 9px;
+      }
+
+      .summary-grid {
+        gap: 6px;
+      }
+
+      .summary-card,
+      .address-card,
+      .totals-card,
+      .note-box,
+      .shipping-box {
+        padding: 6px 8px;
+        border-radius: 8px;
+      }
+
+      .summary-value {
+        font-size: 15px;
+      }
+
+      .order-card {
+        padding: 8px 0;
+      }
+
+      .order-head,
+      .address-grid,
+      .totals-grid {
+        margin-bottom: 6px;
+      }
+
+      .address-grid,
+      .totals-grid {
+        gap: 6px;
+      }
+
+      .pill {
+        padding: 2px 6px;
+        font-size: 9px;
+      }
+
+      .line-table {
+        margin-bottom: 6px;
+        font-size: 9px;
+      }
+
+      .line-table th,
+      .line-table td {
+        padding: 4px 5px;
+      }
+
+      .line-table thead th {
+        font-size: 8px;
+      }
+
+      .totals-row {
+        padding: 2px 0;
+      }
+
+      .totals-row.grand {
+        font-size: 11px;
+        padding-top: 4px;
       }
 
       .sheet.page-break {
