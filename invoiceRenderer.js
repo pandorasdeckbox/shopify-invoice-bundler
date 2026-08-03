@@ -41,6 +41,34 @@ function renderAddress(address) {
   return lines.map(line => `<div>${escapeHtml(line)}</div>`).join('');
 }
 
+function normalizeAddress(address) {
+  if (!address) return null;
+
+  const fields = [
+    'name',
+    'company',
+    'address1',
+    'address2',
+    'city',
+    'province',
+    'zip',
+    'country',
+    'phone',
+  ];
+
+  return fields.map(field => String(address[field] ?? '').trim()).join('|');
+}
+
+function getSharedAddress(addresses) {
+  if (!addresses.length) return null;
+
+  const [firstAddress] = addresses;
+  const normalized = normalizeAddress(firstAddress);
+  if (normalized === null) return null;
+
+  return addresses.every(address => normalizeAddress(address) === normalized) ? firstAddress : null;
+}
+
 function renderOrderLines(order) {
   return order.lineItems.map(item => {
     const subtitle = [item.variantTitle, item.sku ? `SKU ${item.sku}` : ''].filter(Boolean).join(' • ');
@@ -63,6 +91,9 @@ function renderBundleSheet(bundle, extraClass = '') {
   const createdAt = bundle.created_at || new Date().toISOString();
   const shopInfo = bundle.shopInfo || {};
   const currency = bundle.currency || bundle.orders[0]?.currency || 'USD';
+  const sharedShippingAddress = getSharedAddress(bundle.orders.map(order => order.shippingAddress));
+  const sharedBillingAddress = getSharedAddress(bundle.orders.map(order => order.billingAddress));
+  const hasSharedAddressBlock = Boolean(sharedShippingAddress || sharedBillingAddress);
 
   const orderSections = bundle.orders.map(order => `
     <section class="order-card">
@@ -78,6 +109,7 @@ function renderBundleSheet(bundle, extraClass = '') {
         </div>
       </div>
 
+      ${sharedShippingAddress || sharedBillingAddress ? '' : `
       <div class="address-grid">
         <div class="address-card">
           <div class="eyebrow">Ship To</div>
@@ -88,6 +120,24 @@ function renderBundleSheet(bundle, extraClass = '') {
           ${renderAddress(order.billingAddress)}
         </div>
       </div>
+      `}
+
+      ${sharedShippingAddress && sharedBillingAddress ? '' : `
+      <div class="address-grid address-grid-compact${sharedShippingAddress || sharedBillingAddress ? ' single-address-grid' : ''}">
+        ${sharedShippingAddress ? '' : `
+        <div class="address-card">
+          <div class="eyebrow">Ship To</div>
+          ${renderAddress(order.shippingAddress)}
+        </div>
+        `}
+        ${sharedBillingAddress ? '' : `
+        <div class="address-card">
+          <div class="eyebrow">Bill To</div>
+          ${renderAddress(order.billingAddress)}
+        </div>
+        `}
+      </div>
+      `}
 
       <table class="line-table">
         <thead>
@@ -152,6 +202,23 @@ function renderBundleSheet(bundle, extraClass = '') {
             <div class="summary-caption">Grand total across all included orders</div>
           </div>
         </div>
+
+        ${hasSharedAddressBlock ? `
+        <div class="address-grid bundle-address-grid${sharedShippingAddress && sharedBillingAddress ? '' : ' single-address-grid'}">
+          ${sharedShippingAddress ? `
+          <div class="address-card">
+            <div class="eyebrow">Ship To</div>
+            ${renderAddress(sharedShippingAddress)}
+          </div>
+          ` : ''}
+          ${sharedBillingAddress ? `
+          <div class="address-card">
+            <div class="eyebrow">Bill To</div>
+            ${renderAddress(sharedBillingAddress)}
+          </div>
+          ` : ''}
+        </div>
+        ` : ''}
       </header>
 
       <div class="body">
@@ -274,6 +341,11 @@ function renderDocumentShell(title, content) {
       padding: 10px 12px;
     }
 
+    .address-card {
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
     .summary-value {
       font-size: 20px;
       font-weight: 700;
@@ -343,6 +415,19 @@ function renderDocumentShell(title, content) {
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 8px;
       margin-bottom: 10px;
+    }
+
+    .bundle-address-grid {
+      margin-top: 8px;
+      margin-bottom: 0;
+    }
+
+    .address-grid-compact {
+      margin-bottom: 8px;
+    }
+
+    .single-address-grid {
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .line-table {
@@ -515,6 +600,10 @@ function renderDocumentShell(title, content) {
         border-radius: 8px;
       }
 
+      .address-card {
+        font-size: 9px;
+      }
+
       .summary-value {
         font-size: 15px;
       }
@@ -532,6 +621,14 @@ function renderDocumentShell(title, content) {
       .address-grid,
       .totals-grid {
         gap: 6px;
+      }
+
+      .bundle-address-grid {
+        margin-top: 6px;
+      }
+
+      .address-grid-compact {
+        margin-bottom: 6px;
       }
 
       .pill {
