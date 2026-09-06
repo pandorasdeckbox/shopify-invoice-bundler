@@ -210,7 +210,7 @@ function getBundleIdentity(order) {
 }
 
 function isBundlableOpenOrder(order, includeOnHold = true) {
-  if (order.fulfillmentStatusCode === 'UNFULFILLED') return true;
+  if (['UNFULFILLED', 'PARTIALLY_FULFILLED'].includes(order.fulfillmentStatusCode)) return true;
   if (includeOnHold && order.fulfillmentStatusCode === 'ON_HOLD') return true;
   return false;
 }
