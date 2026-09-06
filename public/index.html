@@ -400,18 +400,9 @@
       align-items: center;
     }
 
-    .sticky {
-      position: sticky;
-      top: 24px;
-    }
-
     @media (max-width: 1080px) {
       .workspace {
         grid-template-columns: 1fr;
-      }
-
-      .sticky {
-        position: static;
       }
     }
 
@@ -513,7 +504,7 @@
         </section>
       </main>
 
-      <aside class="stack sticky">
+      <aside class="stack">
         <section class="panel">
           <h3>Print Queue</h3>
           <p class="panel-copy">A quick snapshot of what will print with the current toggle state.</p>
