@@ -468,8 +468,13 @@
         </div>
         <div class="summary-card">
           <div class="eyebrow">On Hold</div>
-          <div class="summary-value" id="summary-hold">Included</div>
-          <div class="summary-note">Toggle whether on-hold orders stay in the print queue.</div>
+          <div class="summary-value" id="summary-hold">Excluded</div>
+          <div class="summary-note">On-hold orders are excluded by default.</div>
+        </div>
+        <div class="summary-card">
+          <div class="eyebrow">Fulfilled Items</div>
+          <div class="summary-value" id="summary-fulfilled">Excluded</div>
+          <div class="summary-note">Previously fulfilled quantities are excluded by default.</div>
         </div>
       </div>
     </header>
@@ -483,12 +488,23 @@
           <div class="control-row">
             <div class="toggle-wrap">
               <label class="switch" aria-label="Include on-hold orders">
-                <input id="include-on-hold" type="checkbox" checked>
+                <input id="include-on-hold" type="checkbox">
                 <span class="slider"></span>
               </label>
               <div>
                 <div><strong>Include On Hold Orders</strong></div>
-                <div class="small">Enabled by default so the queue matches the shop's full open workload.</div>
+                <div class="small">Disabled by default so held orders stay out of the print queue.</div>
+              </div>
+            </div>
+
+            <div class="toggle-wrap">
+              <label class="switch" aria-label="Include fulfilled items">
+                <input id="include-fulfilled-items" type="checkbox">
+                <span class="slider"></span>
+              </label>
+              <div>
+                <div><strong>Include Fulfilled Items</strong></div>
+                <div class="small">Disabled by default; only remaining fulfillable quantities are included.</div>
               </div>
             </div>
 
@@ -541,13 +557,15 @@
     const state = {
       shop: new URLSearchParams(window.location.search).get('shop') || '',
       shopName: '',
-      includeOnHold: true,
+      includeOnHold: false,
+      includeFulfilledItems: false,
       bundles: [],
       history: [],
     };
 
     const shopPill = document.getElementById('shop-pill');
     const includeOnHoldInput = document.getElementById('include-on-hold');
+    const includeFulfilledItemsInput = document.getElementById('include-fulfilled-items');
     const refreshButton = document.getElementById('refresh-btn');
     const printAllButton = document.getElementById('print-all-btn');
     const queueStatus = document.getElementById('queue-status');
@@ -557,6 +575,7 @@
     const summaryOrders = document.getElementById('summary-orders');
     const summaryBundles = document.getElementById('summary-bundles');
     const summaryHold = document.getElementById('summary-hold');
+    const summaryFulfilled = document.getElementById('summary-fulfilled');
     const queueBundles = document.getElementById('queue-bundles');
     const queueOrders = document.getElementById('queue-orders');
     const queueItems = document.getElementById('queue-items');
@@ -623,6 +642,7 @@
       summaryOrders.textContent = String(orderCount);
       summaryBundles.textContent = String(state.bundles.length);
       summaryHold.textContent = state.includeOnHold ? 'Included' : 'Excluded';
+      summaryFulfilled.textContent = state.includeFulfilledItems ? 'Included' : 'Excluded';
 
       queueBundles.textContent = String(state.bundles.length);
       queueOrders.textContent = String(orderCount);
@@ -732,7 +752,7 @@
       setStatus(queueStatus, 'Scanning Shopify open orders…');
 
       try {
-        const data = await api(`/api/open-bundles?includeOnHold=${state.includeOnHold ? 'true' : 'false'}`);
+        const data = await api(`/api/open-bundles?includeOnHold=${state.includeOnHold ? 'true' : 'false'}&includeFulfilledItems=${state.includeFulfilledItems ? 'true' : 'false'}`);
         state.bundles = data.bundles || [];
         renderBundles();
         updateSummary();
@@ -761,6 +781,8 @@
           body: JSON.stringify({
             shop: state.shop,
             orderIds: bundle.orderIds,
+            includeOnHold: state.includeOnHold,
+            includeFulfilledItems: state.includeFulfilledItems,
           }),
         });
 
@@ -785,6 +807,8 @@
           body: JSON.stringify({
             shop: state.shop,
             groups: state.bundles.map(bundle => bundle.orderIds),
+            includeOnHold: state.includeOnHold,
+            includeFulfilledItems: state.includeFulfilledItems,
           }),
         });
 
@@ -801,6 +825,12 @@
 
     includeOnHoldInput.addEventListener('change', async event => {
       state.includeOnHold = event.target.checked;
+      updateSummary();
+      await loadBundles();
+    });
+
+    includeFulfilledItemsInput.addEventListener('change', async event => {
+      state.includeFulfilledItems = event.target.checked;
       updateSummary();
       await loadBundles();
     });

@@ -7,6 +7,7 @@ Embedded Shopify app for Pandora's Deck Box that combines multiple orders from o
 - Search Shopify customers by name, email, or phone
 - Load that customer's recent orders in one place
 - Select any mix of orders and generate one printable combined document
+- Exclude on-hold orders and previously fulfilled item quantities from the print queue by default, with main-page toggles to include either
 - Keep a history of generated bundles so they can be reopened and reprinted later
 - Use the same custom OAuth + Railway deployment pattern as the store's other internal Shopify apps
 

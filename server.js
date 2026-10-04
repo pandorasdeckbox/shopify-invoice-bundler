@@ -13,6 +13,7 @@ import {
   saveBundleHistory,
   sessionStorage,
 } from './database.js';
+import { getFulfilledQuantities, getIncludedQuantity } from './orderFulfillment.js';
 import { renderBundleBatchDocument, renderBundleDocument } from './invoiceRenderer.js';
 
 dotenv.config();
@@ -121,26 +122,50 @@ function mapAddress(address) {
   };
 }
 
-function mapLineItem(item, currency) {
+function mapLineItem(item, currency, includeFulfilledItems = false, fulfilledQuantity = 0) {
   const unitPrice = moneyAmount(item.originalUnitPriceSet);
-  const lineTotal = item.discountedTotalSet
+  const fullLineTotal = item.discountedTotalSet
     ? moneyAmount(item.discountedTotalSet)
     : unitPrice * Number(item.quantity || 0);
+  const orderedQuantity = Number(item.quantity || 0);
+  const quantity = getIncludedQuantity(item, fulfilledQuantity, includeFulfilledItems);
 
   return {
     title: item.title || 'Untitled item',
     variantTitle: item.variantTitle || '',
     sku: item.sku || '',
-    quantity: Number(item.quantity || 0),
+    quantity,
     unitPrice,
-    lineTotal,
+    lineTotal: orderedQuantity > 0 ? fullLineTotal * quantity / orderedQuantity : 0,
     currency,
   };
 }
 
-function mapOrder(orderNode) {
+function mapOrder(orderNode, includeFulfilledItems = false) {
   const currency = moneyCurrency(orderNode.totalPriceSet);
-  const lineItems = (orderNode.lineItems?.nodes || []).map(item => mapLineItem(item, currency));
+  const fulfilledQuantities = getFulfilledQuantities(orderNode.fulfillments);
+  const orderLineItems = orderNode.lineItems?.nodes || [];
+  const allLineItems = orderLineItems.map(item => mapLineItem(item, currency, true));
+  const lineItems = includeFulfilledItems
+    ? allLineItems
+    : orderLineItems
+      .map(item => mapLineItem(item, currency, false, fulfilledQuantities.get(item.id) || 0))
+      .filter(item => item.quantity > 0);
+  const includedLineTotal = lineItems.reduce((sum, item) => sum + item.lineTotal, 0);
+  const fullLineTotal = allLineItems.reduce((sum, item) => sum + item.lineTotal, 0);
+  const inclusionRatio = fullLineTotal > 0 ? Math.min(includedLineTotal / fullLineTotal, 1) : 0;
+  const originalSubtotalPrice = moneyAmount(orderNode.subtotalPriceSet);
+  const subtotalPrice = includeFulfilledItems || inclusionRatio === 1
+    ? originalSubtotalPrice
+    : includedLineTotal;
+  const originalTaxPrice = moneyAmount(orderNode.totalTaxSet);
+  const taxPrice = includeFulfilledItems || inclusionRatio === 1
+    ? originalTaxPrice
+    : Number((originalTaxPrice * inclusionRatio).toFixed(2));
+  const shippingPrice = moneyAmount(orderNode.totalShippingPriceSet);
+  const totalPrice = includeFulfilledItems || inclusionRatio === 1
+    ? moneyAmount(orderNode.totalPriceSet)
+    : Number((subtotalPrice + shippingPrice + taxPrice).toFixed(2));
   const displayFulfillmentStatus = orderNode.displayFulfillmentStatus || 'Unfulfilled';
 
   return {
@@ -154,10 +179,10 @@ function mapOrder(orderNode) {
     fulfillmentStatusCode: normalizeStatusValue(displayFulfillmentStatus),
     note: orderNode.note || '',
     currency,
-    subtotalPrice: moneyAmount(orderNode.subtotalPriceSet),
-    shippingPrice: moneyAmount(orderNode.totalShippingPriceSet),
-    taxPrice: moneyAmount(orderNode.totalTaxSet),
-    totalPrice: moneyAmount(orderNode.totalPriceSet),
+    subtotalPrice,
+    shippingPrice,
+    taxPrice,
+    totalPrice,
     shippingAddress: mapAddress(orderNode.shippingAddress),
     billingAddress: mapAddress(orderNode.billingAddress),
     shippingLines: (orderNode.shippingLines?.nodes || []).map(line => ({
@@ -209,7 +234,7 @@ function getBundleIdentity(order) {
   };
 }
 
-function isBundlableOpenOrder(order, includeOnHold = true) {
+function isBundlableOpenOrder(order, includeOnHold = false) {
   if (['UNFULFILLED', 'PARTIALLY_FULFILLED'].includes(order.fulfillmentStatusCode)) return true;
   if (includeOnHold && order.fulfillmentStatusCode === 'ON_HOLD') return true;
   return false;
@@ -285,7 +310,7 @@ async function fetchShopInfo(session) {
   };
 }
 
-async function fetchSelectedOrders(session, orderIds) {
+async function fetchSelectedOrders(session, orderIds, includeFulfilledItems = false) {
   const client = await getGraphqlClient(session);
   const query = `
     query BundleOrders($ids: [ID!]!) {
@@ -337,12 +362,22 @@ async function fetchSelectedOrders(session, orderIds) {
           }
           lineItems(first: 100) {
             nodes {
+              id
               title
               variantTitle
               sku
               quantity
+              currentQuantity
               originalUnitPriceSet { shopMoney { amount currencyCode } }
               discountedTotalSet { shopMoney { amount currencyCode } }
+            }
+          }
+          fulfillments {
+            fulfillmentLineItems(first: 100) {
+              nodes {
+                quantity
+                lineItem { id }
+              }
             }
           }
         }
@@ -351,10 +386,12 @@ async function fetchSelectedOrders(session, orderIds) {
   `;
 
   const response = await client.request(query, { variables: { ids: orderIds } });
-  return (response?.data?.nodes || []).filter(Boolean).map(mapOrder);
+  return (response?.data?.nodes || [])
+    .filter(Boolean)
+    .map(order => mapOrder(order, includeFulfilledItems));
 }
 
-async function fetchOpenOrders(session, includeOnHold = true) {
+async function fetchOpenOrders(session, includeOnHold = false, includeFulfilledItems = false) {
   const client = await getGraphqlClient(session);
   const orders = [];
   let hasNextPage = true;
@@ -410,12 +447,22 @@ async function fetchOpenOrders(session, includeOnHold = true) {
           }
           lineItems(first: 100) {
             nodes {
+              id
               title
               variantTitle
               sku
               quantity
+              currentQuantity
               originalUnitPriceSet { shopMoney { amount currencyCode } }
               discountedTotalSet { shopMoney { amount currencyCode } }
+            }
+          }
+          fulfillments {
+            fulfillmentLineItems(first: 100) {
+              nodes {
+                quantity
+                lineItem { id }
+              }
             }
           }
         }
@@ -438,7 +485,9 @@ async function fetchOpenOrders(session, includeOnHold = true) {
 
     const connection = response?.data?.orders;
     const nodes = connection?.nodes || [];
-    orders.push(...nodes.map(mapOrder).filter(order => isBundlableOpenOrder(order, includeOnHold)));
+    orders.push(...nodes
+      .map(order => mapOrder(order, includeFulfilledItems))
+      .filter(order => isBundlableOpenOrder(order, includeOnHold) && order.lineItems.length > 0));
 
     hasNextPage = Boolean(connection?.pageInfo?.hasNextPage);
     cursor = connection?.pageInfo?.endCursor || null;
@@ -606,12 +655,14 @@ app.get('/api/open-bundles', async (req, res) => {
     const session = await verifySession(req, res);
     if (!session) return;
 
-    const includeOnHold = String(req.query.includeOnHold || 'true') !== 'false';
-    const orders = await fetchOpenOrders(session, includeOnHold);
+    const includeOnHold = String(req.query.includeOnHold || 'false') === 'true';
+    const includeFulfilledItems = String(req.query.includeFulfilledItems || 'false') === 'true';
+    const orders = await fetchOpenOrders(session, includeOnHold, includeFulfilledItems);
     const bundles = groupOrdersByBundle(orders);
 
     res.json({
       includeOnHold,
+      includeFulfilledItems,
       orderCount: orders.length,
       bundleCount: bundles.length,
       bundles,
@@ -741,12 +792,22 @@ app.get('/api/orders', async (req, res) => {
               }
               lineItems(first: 100) {
                 nodes {
+                  id
                   title
                   variantTitle
                   sku
                   quantity
+                  currentQuantity
                   originalUnitPriceSet { shopMoney { amount currencyCode } }
                   discountedTotalSet { shopMoney { amount currencyCode } }
+                }
+              }
+              fulfillments {
+                fulfillmentLineItems(first: 100) {
+                  nodes {
+                    quantity
+                    lineItem { id }
+                  }
                 }
               }
             }
@@ -787,14 +848,18 @@ app.post('/api/bundles', async (req, res) => {
     const orderIds = Array.isArray(req.body.orderIds)
       ? req.body.orderIds.map(value => String(value)).filter(Boolean)
       : [];
+    const includeOnHold = req.body.includeOnHold === true;
+    const includeFulfilledItems = req.body.includeFulfilledItems === true;
 
     if (!orderIds.length) {
       return res.status(400).json({ error: 'Select at least one order' });
     }
 
-    const orders = await fetchSelectedOrders(session, orderIds);
+    const orders = (await fetchSelectedOrders(session, orderIds, includeFulfilledItems))
+      .filter(order => isBundlableOpenOrder(order, includeOnHold)
+        && (includeFulfilledItems || order.lineItems.length > 0));
     if (!orders.length) {
-      return res.status(404).json({ error: 'No orders found for the selected IDs' });
+      return res.status(404).json({ error: 'No eligible orders found for the selected IDs' });
     }
 
     const customerIds = [...new Set(orders.map(order => order.customer?.id).filter(Boolean))];
@@ -834,13 +899,17 @@ app.post('/api/bundles/print-all', async (req, res) => {
     const groups = Array.isArray(req.body.groups)
       ? req.body.groups.map(group => Array.isArray(group) ? group.map(value => String(value)).filter(Boolean) : []).filter(group => group.length)
       : [];
+    const includeOnHold = req.body.includeOnHold === true;
+    const includeFulfilledItems = req.body.includeFulfilledItems === true;
 
     if (!groups.length) {
       return res.status(400).json({ error: 'No bundle groups were provided' });
     }
 
     const uniqueOrderIds = [...new Set(groups.flat())];
-    const allOrders = await fetchSelectedOrders(session, uniqueOrderIds);
+    const allOrders = (await fetchSelectedOrders(session, uniqueOrderIds, includeFulfilledItems))
+      .filter(order => isBundlableOpenOrder(order, includeOnHold)
+        && (includeFulfilledItems || order.lineItems.length > 0));
     const orderMap = new Map(allOrders.map(order => [order.id, order]));
     const bundleIds = [];
     const bundles = [];
