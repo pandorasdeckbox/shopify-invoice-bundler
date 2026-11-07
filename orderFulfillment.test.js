@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { getFulfilledQuantities, getIncludedQuantity } from './orderFulfillment.js';
+import {
+  filterEventLineItems,
+  getFulfilledQuantities,
+  getIncludedQuantity,
+} from './orderFulfillment.js';
 
 test('aggregates fulfilled quantities by order line item across fulfillments', () => {
   const fulfilledQuantities = getFulfilledQuantities([
@@ -32,4 +36,14 @@ test('includes only the remaining current quantity by default', () => {
 
 test('can include ordered quantities when fulfilled items are enabled', () => {
   assert.equal(getIncludedQuantity({ quantity: 5, currentQuantity: 4 }, 2, true), 5);
+});
+
+test('excludes EVENT line items by title or variant regardless of capitalization', () => {
+  const eventItem = { title: 'Special Event Ticket' };
+  const variantEventItem = { title: 'Entry', variantTitle: 'eVeNt pass' };
+  const regularItem = { title: 'Deck Box', variantTitle: 'Black' };
+  const lineItems = [eventItem, variantEventItem, regularItem];
+
+  assert.deepEqual(filterEventLineItems(lineItems), [regularItem]);
+  assert.deepEqual(filterEventLineItems(lineItems, true), lineItems);
 });

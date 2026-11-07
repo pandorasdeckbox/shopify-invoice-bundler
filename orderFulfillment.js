@@ -22,3 +22,10 @@ export function getIncludedQuantity(item, fulfilledQuantity = 0, includeFulfille
   const currentQuantity = Number(item.currentQuantity ?? orderedQuantity);
   return Math.min(orderedQuantity, Math.max(currentQuantity - fulfilledQuantity, 0));
 }
+
+export function filterEventLineItems(lineItems = [], includeEventItems = false) {
+  if (includeEventItems) return lineItems;
+
+  return lineItems.filter(item => ![item.title, item.variantTitle]
+    .some(value => String(value || '').toUpperCase().includes('EVENT')));
+}

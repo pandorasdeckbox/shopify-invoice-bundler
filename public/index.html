@@ -476,6 +476,11 @@
           <div class="summary-value" id="summary-fulfilled">Excluded</div>
           <div class="summary-note">Previously fulfilled quantities are excluded by default.</div>
         </div>
+        <div class="summary-card">
+          <div class="eyebrow">EVENT Items</div>
+          <div class="summary-value" id="summary-events">Excluded</div>
+          <div class="summary-note">Items with EVENT in the name are excluded by default.</div>
+        </div>
       </div>
     </header>
 
@@ -505,6 +510,17 @@
               <div>
                 <div><strong>Include Fulfilled Items</strong></div>
                 <div class="small">Disabled by default; only remaining fulfillable quantities are included.</div>
+              </div>
+            </div>
+
+            <div class="toggle-wrap">
+              <label class="switch" aria-label="Include EVENT items">
+                <input id="include-event-items" type="checkbox">
+                <span class="slider"></span>
+              </label>
+              <div>
+                <div><strong>Include EVENT Items</strong></div>
+                <div class="small">Disabled by default; items with EVENT in the name are omitted.</div>
               </div>
             </div>
 
@@ -559,6 +575,7 @@
       shopName: '',
       includeOnHold: false,
       includeFulfilledItems: false,
+      includeEventItems: false,
       bundles: [],
       history: [],
     };
@@ -566,6 +583,7 @@
     const shopPill = document.getElementById('shop-pill');
     const includeOnHoldInput = document.getElementById('include-on-hold');
     const includeFulfilledItemsInput = document.getElementById('include-fulfilled-items');
+    const includeEventItemsInput = document.getElementById('include-event-items');
     const refreshButton = document.getElementById('refresh-btn');
     const printAllButton = document.getElementById('print-all-btn');
     const queueStatus = document.getElementById('queue-status');
@@ -576,6 +594,7 @@
     const summaryBundles = document.getElementById('summary-bundles');
     const summaryHold = document.getElementById('summary-hold');
     const summaryFulfilled = document.getElementById('summary-fulfilled');
+    const summaryEvents = document.getElementById('summary-events');
     const queueBundles = document.getElementById('queue-bundles');
     const queueOrders = document.getElementById('queue-orders');
     const queueItems = document.getElementById('queue-items');
@@ -643,6 +662,7 @@
       summaryBundles.textContent = String(state.bundles.length);
       summaryHold.textContent = state.includeOnHold ? 'Included' : 'Excluded';
       summaryFulfilled.textContent = state.includeFulfilledItems ? 'Included' : 'Excluded';
+      summaryEvents.textContent = state.includeEventItems ? 'Included' : 'Excluded';
 
       queueBundles.textContent = String(state.bundles.length);
       queueOrders.textContent = String(orderCount);
@@ -752,7 +772,7 @@
       setStatus(queueStatus, 'Scanning Shopify open orders…');
 
       try {
-        const data = await api(`/api/open-bundles?includeOnHold=${state.includeOnHold ? 'true' : 'false'}&includeFulfilledItems=${state.includeFulfilledItems ? 'true' : 'false'}`);
+        const data = await api(`/api/open-bundles?includeOnHold=${state.includeOnHold ? 'true' : 'false'}&includeFulfilledItems=${state.includeFulfilledItems ? 'true' : 'false'}&includeEventItems=${state.includeEventItems ? 'true' : 'false'}`);
         state.bundles = data.bundles || [];
         renderBundles();
         updateSummary();
@@ -783,6 +803,7 @@
             orderIds: bundle.orderIds,
             includeOnHold: state.includeOnHold,
             includeFulfilledItems: state.includeFulfilledItems,
+            includeEventItems: state.includeEventItems,
           }),
         });
 
@@ -809,6 +830,7 @@
             groups: state.bundles.map(bundle => bundle.orderIds),
             includeOnHold: state.includeOnHold,
             includeFulfilledItems: state.includeFulfilledItems,
+            includeEventItems: state.includeEventItems,
           }),
         });
 
@@ -831,6 +853,12 @@
 
     includeFulfilledItemsInput.addEventListener('change', async event => {
       state.includeFulfilledItems = event.target.checked;
+      updateSummary();
+      await loadBundles();
+    });
+
+    includeEventItemsInput.addEventListener('change', async event => {
+      state.includeEventItems = event.target.checked;
       updateSummary();
       await loadBundles();
     });
